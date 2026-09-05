@@ -1,0 +1,46 @@
+{
+  "name": "secure-grant-portal",
+  "version": "1.0.0",
+  "description": "Secure Multi-User Grant Management Portal with RBAC, OAuth 2.0, MVC Architecture, and Redis Caching",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage --runInBand --detectOpenHandles --forceExit"
+  },
+  "keywords": [
+    "rbac",
+    "oauth2",
+    "grant-management",
+    "mvc",
+    "express",
+    "postgresql",
+    "redis",
+    "docker"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "ioredis": "^5.4.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
