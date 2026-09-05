@@ -1,0 +1,100 @@
+services:
+  # ----------------------------------------
+  # PostgreSQL Database Service
+  # ----------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: grant_postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: grant_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d grant_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - grant_network
+
+  # ----------------------------------------
+  # Redis Cache Service
+  # ----------------------------------------
+  cache:
+    image: redis:7-alpine
+    container_name: grant_redis_cache
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - grant_network
+
+  # ----------------------------------------
+  # Main Application Service (Node.js MVC API)
+  # ----------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grant_app_service
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=grant_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/grant_db
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://cache:6379
+      - JWT_SECRET=super_secret_jwt_key_secure_grant_portal_2026_change_in_production
+      - JWT_EXPIRES_IN=24h
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-mock-google-client-id.apps.googleusercontent.com}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-mock-google-client-secret}
+      - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI:-http://localhost:3000/api/auth/google/callback}
+      - ADMIN_NAME=Super Admin
+      - ADMIN_EMAIL=admin@securegrant.org
+      - ADMIN_PASSWORD=AdminSecurePassword123!
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - grant_network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  grant_network:
+    driver: bridge
